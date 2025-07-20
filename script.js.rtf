@@ -1,0 +1,589 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 // Estado da aplica\'e7\'e3o\
+let appState = \{\
+  balance: 47.5,\
+  modulesInDelay: 3,\
+  completedModules: 88,\
+  scheduledExams: 3\
+\};\
+\
+// Dados simulados\
+const modulesData = \{\
+  inDelay: [\
+    \{\
+      id: "ufcd9499",\
+      name: "DIC - Futebol Metodologia do Treino",\
+      code: "UFCD 9499",\
+      grade: 8,\
+      lastEvaluation: "15/06/2025",\
+      deadline: "20/07/2025",\
+      daysLeft: 2,\
+      fee: 7,\
+      status: "delay"\
+    \},\
+    \{\
+      id: "ufcd9442",\
+      name: "DCG - H\'f3quei Patins Metodologia",\
+      code: "UFCD 9442",\
+      grade: 9,\
+      lastEvaluation: "10/06/2025",\
+      deadline: "21/07/2025",\
+      daysLeft: 3,\
+      fee: 15,\
+      status: "delay"\
+    \},\
+    \{\
+      id: "ufcd9497",\
+      name: "DIC - Futebol Caracteriza\'e7\'e3o do Esfor\'e7o",\
+      code: "UFCD 9497",\
+      grade: null,\
+      inscriptionDate: "16/07/2025",\
+      examDate: "21/07/2025",\
+      status: "pending"\
+    \}\
+  ],\
+  upcoming: [\
+    \{\
+      id: "ufcd9499",\
+      name: "DIC - Futebol Metodologia do Treino",\
+      code: "UFCD 9499",\
+      date: "18/07/2025",\
+      time: "15:00",\
+      location: "Sala B6",\
+      duration: "90 minutos"\
+    \},\
+    \{\
+      id: "ufcd9497",\
+      name: "DIC - Futebol Caracteriza\'e7\'e3o do Esfor\'e7o",\
+      code: "UFCD 9497",\
+      date: "21/07/2025",\
+      time: "10:30",\
+      location: "Sala B6",\
+      duration: "90 minutos"\
+    \}\
+  ]\
+\};\
+\
+const disciplinesData = [\
+  \{ name: "Portugu\'eas", completed: 9, total: 9, status: "complete" \},\
+  \{ name: "DIC", completed: 13, total: 16, status: "incomplete", inDelay: 3 \},\
+  \{ name: "DCG", completed: 7, total: 7, status: "complete" \},\
+  \{ name: "Educa\'e7\'e3o F\'edsica", completed: 15, total: 15, status: "complete" \},\
+  \{ name: "Matem\'e1tica", completed: 6, total: 6, status: "complete" \},\
+  \{ name: "\'c1rea de Integra\'e7\'e3o", completed: 5, total: 5, status: "complete" \},\
+  \{ name: "AG", completed: 6, total: 6, status: "complete" \},\
+  \{ name: "Ingl\'eas Continua\'e7\'e3o", completed: 8, total: 8, status: "complete" \},\
+  \{ name: "TIC", completed: 4, total: 4, status: "complete" \},\
+  \{ name: "Psicologia", completed: 4, total: 4, status: "complete" \},\
+  \{ name: "Estat\'edstica", completed: 7, total: 7, status: "complete" \},\
+  \{ name: "Ingl\'eas", completed: 4, total: 4, status: "complete" \}\
+];\
+\
+// Inicializa\'e7\'e3o da aplica\'e7\'e3o\
+document.addEventListener("DOMContentLoaded", function () \{\
+  initNavigation();\
+  initFilters();\
+  loadDashboard();\
+  loadModules();\
+  generateCalendar();\
+\});\
+\
+// Navega\'e7\'e3o entre sec\'e7\'f5es\
+function initNavigation() \{\
+  document.querySelectorAll(".nav-tab").forEach((tab) => \{\
+    tab.addEventListener("click", () => \{\
+      // Remove active class from all tabs and sections\
+      document\
+        .querySelectorAll(".nav-tab")\
+        .forEach((t) => t.classList.remove("active"));\
+      document\
+        .querySelectorAll(".content-section")\
+        .forEach((s) => s.classList.remove("active"));\
+\
+      // Add active class to clicked tab and corresponding section\
+      tab.classList.add("active");\
+      document.getElementById(tab.dataset.tab).classList.add("active");\
+    \});\
+  \});\
+\}\
+\
+// Filtros dos m\'f3dulos\
+function initFilters() \{\
+  const filterButtons = document.querySelectorAll(".filter-btn");\
+\
+  filterButtons.forEach((button) => \{\
+    button.addEventListener("click", () => \{\
+      // Remove active class from all buttons\
+      filterButtons.forEach((btn) => btn.classList.remove("active"));\
+      // Add active class to clicked button\
+      button.classList.add("active");\
+\
+      const filter = button.dataset.filter;\
+      filterModules(filter);\
+    \});\
+  \});\
+\}\
+\
+// Carregamento do dashboard\
+function loadDashboard() \{\
+  loadAttentionModules();\
+  loadUpcomingExams();\
+\}\
+\
+// M\'f3dulos que precisam de aten\'e7\'e3o\
+function loadAttentionModules() \{\
+  const container = document.getElementById("attention-modules");\
+  container.innerHTML = "";\
+\
+  modulesData.inDelay.forEach((module) => \{\
+    const moduleCard = createModuleCard(module, "attention");\
+    container.appendChild(moduleCard);\
+  \});\
+\}\
+\
+// Pr\'f3ximos exames\
+function loadUpcomingExams() \{\
+  const container = document.getElementById("upcoming-exams");\
+  container.innerHTML = "";\
+\
+  modulesData.upcoming.forEach((exam) => \{\
+    const examCard = createExamCard(exam);\
+    container.appendChild(examCard);\
+  \});\
+\}\
+\
+// Cria\'e7\'e3o de card de m\'f3dulo\
+function createModuleCard(module, type = "full") \{\
+  const card = document.createElement("div");\
+\
+  if (module.status === "delay") \{\
+    card.className = "module-card danger";\
+    card.innerHTML = `\
+            <div class="module-header">\
+                <div>\
+                    <div class="module-name">$\{module.name\}</div>\
+                    <div class="module-code">$\{module.code\}</div>\
+                </div>\
+                <div class="module-status status-danger">$\{\
+                  module.grade\
+                \} valores</div>\
+            </div>\
+            <div class="module-details">\
+                <strong>\'daltima avalia\'e7\'e3o:</strong> $\{module.lastEvaluation\}\
+            </div>\
+            <div class="module-meta">\
+                <div class="deadline-info">\
+                    <span>\uc0\u9200  Prazo 1.\'aa \'e9poca:</span>\
+                    <span class="deadline-urgent">$\{module.deadline\} ($\{\
+      module.daysLeft\
+    \} dias!)</span>\
+                </div>\
+                <div>\uc0\u55357 \u56502  Taxa: \'80$\{module.fee\},00$\{\
+      module.fee > 7 ? " (ap\'f3s limite)" : ""\
+    \}</div>\
+            </div>\
+            <button class="btn btn-primary" onclick="openInscriptionModal('$\{\
+              module.name\
+            \}', '$\{module.code\}', $\{module.fee\})">\
+                \uc0\u55357 \u56541  Inscrever em Exame\
+            </button>\
+        `;\
+  \} else if (module.status === "pending") \{\
+    card.className = "module-card warning";\
+    card.innerHTML = `\
+            <div class="module-header">\
+                <div>\
+                    <div class="module-name">$\{module.name\}</div>\
+                    <div class="module-code">$\{module.code\}</div>\
+                </div>\
+                <div class="module-status status-warning">Aguarda Aprova\'e7\'e3o</div>\
+            </div>\
+            <div class="module-details">\
+                <strong>Inscrito em:</strong> $\{module.inscriptionDate\} \'95 <strong>\'c9poca:</strong> 1.\'aa<br>\
+                <strong>Exame previsto:</strong> $\{module.examDate\}\
+            </div>\
+            <div class="module-meta">\
+                <div>\uc0\u9989  Pago: \'807,00</div>\
+            </div>\
+            <button class="btn btn-secondary" disabled>\
+                \uc0\u9203  Aguarda Aprova\'e7\'e3o DT\
+            </button>\
+        `;\
+  \}\
+\
+  return card;\
+\}\
+\
+// Cria\'e7\'e3o de card de exame\
+function createExamCard(exam) \{\
+  const card = document.createElement("div");\
+  card.className = "module-card success";\
+  card.innerHTML = `\
+        <div class="module-header">\
+            <div>\
+                <div class="module-name">$\{exam.name\}</div>\
+                <div class="module-code">$\{exam.code\}</div>\
+            </div>\
+            <div class="module-status status-success">Confirmado</div>\
+        </div>\
+        <div class="module-details">\
+            <strong>\uc0\u55357 \u56517  Data:</strong> $\{exam.date\} \'e0s $\{exam.time\}<br>\
+            <strong>\uc0\u55357 \u56525  Local:</strong> $\{exam.location\} \'95 <strong>\u9201 \u65039  Dura\'e7\'e3o:</strong> $\{exam.duration\}<br>\
+            <strong>\uc0\u9888 \u65039  Importante:</strong> Chegada obrigat\'f3ria 15 minutos antes da prova\
+        </div>\
+    `;\
+  return card;\
+\}\
+\
+// Carregamento dos m\'f3dulos\
+function loadModules() \{\
+  loadDisciplineSummary();\
+  loadModulesList();\
+\}\
+\
+// Resumo por disciplinas\
+function loadDisciplineSummary() \{\
+  const container = document.getElementById("discipline-summary");\
+  container.innerHTML = "";\
+\
+  disciplinesData.forEach((discipline) => \{\
+    const card = document.createElement("div");\
+    card.className = "discipline-card";\
+\
+    let borderColor = "#27ae60";\
+    let statusText = "\uc0\u9989  Completo";\
+    let statusColor = "#27ae60";\
+\
+    if (discipline.status === "incomplete") \{\
+      borderColor = "#e74c3c";\
+      statusText = `\uc0\u9888 \u65039  $\{discipline.inDelay\} em atraso`;\
+      statusColor = "#e74c3c";\
+    \}\
+\
+    card.style.borderLeftColor = borderColor;\
+    card.innerHTML = `\
+            <h4 style="margin-bottom: 8px; color: #2c3e50;">$\{discipline.name\}</h4>\
+            <div style="font-size: 0.9em; color: #666;">$\{discipline.completed\}/$\{discipline.total\} m\'f3dulos conclu\'eddos</div>\
+            <div style="font-size: 0.8em; color: $\{statusColor\}; margin-top: 5px;">$\{statusText\}</div>\
+        `;\
+\
+    container.appendChild(card);\
+  \});\
+\}\
+\
+// Lista de m\'f3dulos\
+function loadModulesList() \{\
+  const container = document.getElementById("modules-list");\
+  container.innerHTML = "";\
+\
+  // M\'f3dulos em atraso\
+  const delaySection = document.createElement("div");\
+  delaySection.className = "module-group";\
+  delaySection.setAttribute("data-filter", "atraso");\
+  delaySection.innerHTML = `\
+        <h3 style="color: #e74c3c; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #e74c3c;">\
+            \uc0\u9888 \u65039  M\'f3dulos em Atraso (3)\
+        </h3>\
+    `;\
+\
+  modulesData.inDelay.forEach((module) => \{\
+    const moduleCard = createModuleCard(module);\
+    moduleCard.style.marginBottom = "15px";\
+    delaySection.appendChild(moduleCard);\
+  \});\
+\
+  container.appendChild(delaySection);\
+\
+  // Estat\'edsticas de progresso\
+  const progressSection = document.createElement("div");\
+  progressSection.className = "progress-section";\
+  progressSection.style.cssText = `\
+        margin-top: 30px; \
+        background: white; \
+        padding: 20px; \
+        border-radius: 12px; \
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);\
+    `;\
+  progressSection.innerHTML = `\
+        <h3 style="margin-bottom: 15px; color: #2c3e50;">\uc0\u55357 \u56522  Progresso do Curso PTD</h3>\
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">\
+            <div>\
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">\
+                    <span style="font-weight: 500;">M\'f3dulos Conclu\'eddos</span>\
+                    <span style="color: #27ae60; font-weight: 600;">88/91 (96,7%)</span>\
+                </div>\
+                <div style="background: #ecf0f1; border-radius: 10px; height: 8px; overflow: hidden;">\
+                    <div style="background: #27ae60; height: 100%; width: 96.7%; border-radius: 10px;"></div>\
+                </div>\
+            </div>\
+            <div>\
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">\
+                    <span style="font-weight: 500;">M\'e9dia Geral</span>\
+                    <span style="color: #9b59b6; font-weight: 600;">13,4 valores</span>\
+                </div>\
+                <div style="background: #ecf0f1; border-radius: 10px; height: 8px; overflow: hidden;">\
+                    <div style="background: #9b59b6; height: 100%; width: 67%; border-radius: 10px;"></div>\
+                </div>\
+            </div>\
+            <div>\
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">\
+                    <span style="font-weight: 500;">Previs\'e3o de Conclus\'e3o</span>\
+                    <span style="color: #3498db; font-weight: 600;">Setembro 2025</span>\
+                </div>\
+                <div style="background: #ecf0f1; border-radius: 10px; height: 8px; overflow: hidden;">\
+                    <div style="background: #3498db; height: 100%; width: 85%; border-radius: 10px;"></div>\
+                </div>\
+            </div>\
+        </div>\
+    `;\
+\
+  container.appendChild(progressSection);\
+\}\
+\
+// Filtrar m\'f3dulos\
+function filterModules(filter) \{\
+  const disciplineSummary = document.getElementById("discipline-summary");\
+  const moduleGroups = document.querySelectorAll(".module-group");\
+  const progressSection = document.querySelector(".progress-section");\
+\
+  // Reset all visibility\
+  disciplineSummary.style.display = "grid";\
+  moduleGroups.forEach((group) => (group.style.display = "block"));\
+  if (progressSection) progressSection.style.display = "block";\
+\
+  switch (filter) \{\
+    case "todos":\
+      // Show everything\
+      break;\
+    case "concluidos":\
+      disciplineSummary.style.display = "none";\
+      moduleGroups.forEach((group) => (group.style.display = "none"));\
+      break;\
+    case "atraso":\
+      disciplineSummary.style.display = "none";\
+      if (progressSection) progressSection.style.display = "none";\
+      break;\
+    case "disciplina":\
+      moduleGroups.forEach((group) => (group.style.display = "none"));\
+      if (progressSection) progressSection.style.display = "none";\
+      break;\
+  \}\
+\}\
+\
+// Gerar calend\'e1rio\
+function generateCalendar() \{\
+  const calendar = document.getElementById("calendar-grid");\
+  calendar.innerHTML = "";\
+\
+  // Headers dos dias da semana\
+  const dayHeaders = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S\'e1b"];\
+  dayHeaders.forEach((day) => \{\
+    const header = document.createElement("div");\
+    header.className = "calendar-header";\
+    header.textContent = day;\
+    calendar.appendChild(header);\
+  \});\
+\
+  // Dias do m\'eas (Julho 2025)\
+  const examDays = [18, 21]; // Datas dos exames\
+  const today = 18; // Simular que hoje \'e9 18 de julho\
+\
+  // Calcular primeiro dia da semana (1 de julho de 2025 \'e9 ter\'e7a-feira)\
+  const firstDayOfWeek = 2; // Ter\'e7a-feira (0=domingo, 1=segunda, etc.)\
+\
+  // Adicionar dias vazios antes do primeiro dia\
+  for (let i = 0; i < firstDayOfWeek; i++) \{\
+    const emptyDay = document.createElement("div");\
+    emptyDay.className = "calendar-day other-month";\
+    calendar.appendChild(emptyDay);\
+  \}\
+\
+  // Adicionar dias do m\'eas\
+  for (let day = 1; day <= 31; day++) \{\
+    const dayElement = document.createElement("div");\
+    dayElement.className = "calendar-day";\
+    dayElement.innerHTML = `<span>$\{day\}</span>`;\
+\
+    if (day === today) \{\
+      dayElement.classList.add("today");\
+    \}\
+\
+    if (examDays.includes(day)) \{\
+      dayElement.classList.add("has-exam");\
+      dayElement.innerHTML += '<div class="exam-indicator"></div>';\
+\
+      const examTitle =\
+        day === 18\
+          ? "DIC - Futebol Metodologia (15:00)"\
+          : "DIC - Futebol Esfor\'e7o (10:30)";\
+      dayElement.title = examTitle;\
+    \}\
+\
+    calendar.appendChild(dayElement);\
+  \}\
+\}\
+\
+// Modal de inscri\'e7\'e3o\
+function openInscriptionModal(subject, moduleCode, fee) \{\
+  const dentroDosprazo = fee === 7;\
+  const taxaTexto = dentroDosprazo\
+    ? "\'807,00 (dentro do prazo)"\
+    : "\'8015,00 (ap\'f3s data limite)";\
+\
+  const modal = document.createElement("div");\
+  modal.className = "modal";\
+  modal.id = "inscription-modal";\
+  modal.innerHTML = `\
+        <div class="modal-content">\
+            <button class="close-btn" onclick="closeModal()">&times;</button>\
+            <div class="modal-header">\
+                <h3 class="modal-title">Inscri\'e7\'e3o em Exame</h3>\
+                <p style="color: #666;">$\{subject\} - $\{moduleCode\}</p>\
+            </div>\
+            \
+            <div class="form-group">\
+                <label class="form-label">Escolha a \'e9poca de exame:</label>\
+                <div class="radio-group">\
+                    <label class="radio-option selected" data-value="1">\
+                        <input type="radio" name="epoca" value="1" checked style="margin-right: 10px;">\
+                        <div>\
+                            <strong>1.\'aa \'c9poca</strong><br>\
+                            <small>Inscri\'e7\'f5es at\'e9 20/07/2025 | Exames 25-29/07/2025</small>\
+                        </div>\
+                    </label>\
+                    <label class="radio-option" data-value="2">\
+                        <input type="radio" name="epoca" value="2" style="margin-right: 10px;">\
+                        <div>\
+                            <strong>2.\'aa \'c9poca</strong><br>\
+                            <small>Inscri\'e7\'f5es at\'e9 15/09/2025 | Exames 20-24/09/2025</small>\
+                        </div>\
+                    </label>\
+                </div>\
+            </div>\
+\
+            <div class="payment-summary">\
+                <h4 style="margin-bottom: 15px;">\uc0\u55357 \u56499  Informa\'e7\'e3o de Pagamento</h4>\
+                <div class="payment-row">\
+                    <span>Taxa de exame:</span>\
+                    <span>$\{taxaTexto\}</span>\
+                </div>\
+                <div class="payment-row">\
+                    <span>Saldo atual do cart\'e3o:</span>\
+                    <span>\'80$\{appState.balance.toFixed(2)\}</span>\
+                </div>\
+                <div class="payment-row total">\
+                    <span>Saldo ap\'f3s inscri\'e7\'e3o:</span>\
+                    <span>\'80$\{(appState.balance - fee).toFixed(2)\}</span>\
+                </div>\
+            </div>\
+\
+            <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">\
+                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>\
+                <button class="btn btn-primary" onclick="confirmInscription('$\{subject\}', '$\{moduleCode\}', $\{fee\})">\
+                    \uc0\u55357 \u56541  Confirmar Inscri\'e7\'e3o\
+                </button>\
+            </div>\
+        </div>\
+    `;\
+\
+  document.body.appendChild(modal);\
+\
+  // Radio option selection\
+  modal.querySelectorAll(".radio-option").forEach((option) => \{\
+    option.addEventListener("click", () => \{\
+      modal\
+        .querySelectorAll(".radio-option")\
+        .forEach((o) => o.classList.remove("selected"));\
+      option.classList.add("selected");\
+      option.querySelector("input").checked = true;\
+    \});\
+  \});\
+\}\
+\
+// Fechar modal\
+function closeModal() \{\
+  const modal = document.getElementById("inscription-modal");\
+  if (modal) modal.remove();\
+\}\
+\
+// Confirmar inscri\'e7\'e3o\
+function confirmInscription(subject, moduleCode, fee) \{\
+  const epoca = document.querySelector('input[name="epoca"]:checked').value;\
+\
+  // Verificar se tem saldo suficiente\
+  if (appState.balance < fee) \{\
+    showNotification(\
+      `\uc0\u10060  Saldo insuficiente no cart\'e3o de aluno! Necess\'e1rio: \'80$\{fee\},00. Carregue o cart\'e3o na secretaria.`,\
+      "error"\
+    );\
+    return;\
+  \}\
+\
+  // Mostrar processamento\
+  showNotification("\uc0\u55357 \u56580  Processando inscri\'e7\'e3o...", "info");\
+\
+  setTimeout(() => \{\
+    // Atualizar saldo\
+    appState.balance -= fee;\
+    document.getElementById(\
+      "card-balance"\
+    ).textContent = `\'80$\{appState.balance.toFixed(2)\}`;\
+\
+    showNotification(\
+      `\uc0\u9989  Inscri\'e7\'e3o confirmada! $\{subject\} ($\{epoca\}.\'aa \'e9poca) enviada para aprova\'e7\'e3o da DT.`,\
+      "success"\
+    );\
+    closeModal();\
+\
+    // Simular aprova\'e7\'e3o ap\'f3s alguns segundos\
+    setTimeout(() => \{\
+      showNotification(\
+        `\uc0\u55357 \u56551  Diretora de Turma notificada. Receber\'e1 confirma\'e7\'e3o quando a inscri\'e7\'e3o for aprovada.`,\
+        "info"\
+      );\
+    \}, 3000);\
+  \}, 2000);\
+\}\
+\
+// Mostrar notifica\'e7\'e3o\
+function showNotification(message, type = "info") \{\
+  const notification = document.createElement("div");\
+  notification.className = `notification $\{type\}`;\
+  notification.textContent = message;\
+\
+  document.body.appendChild(notification);\
+\
+  setTimeout(() => \{\
+    notification.remove();\
+  \}, 5000);\
+\}\
+\
+// Hist\'f3rico do cart\'e3o\
+function showCardHistory() \{\
+  showNotification("\uc0\u55357 \u56523  Funcionalidade em desenvolvimento", "info");\
+\}\
+\
+// Extrato do cart\'e3o\
+function showCardStatement() \{\
+  showNotification("\uc0\u55357 \u56522  Funcionalidade em desenvolvimento", "info");\
+\}\
+\
+// Modal handlers\
+document.addEventListener("click", function (e) \{\
+  if (e.target.classList.contains("modal")) \{\
+    closeModal();\
+  \}\
+\});\
+\
+document.addEventListener("keydown", function (e) \{\
+  if (e.key === "Escape") \{\
+    closeModal();\
+  \}\
+\});\
+}
